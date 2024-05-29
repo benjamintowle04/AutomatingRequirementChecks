@@ -2,16 +2,17 @@ from openpyxl import Workbook, load_workbook
 from datetime import datetime
 from time import time
 
-#Testing initial commit
 
 wb_requirementsCheck = load_workbook(
-    r"C:\DSSO\AutomatingRequirementChecks\SampleRequirementsCheckForBen.xlsx"
+    r"SampleRequirementsCheckForBen.xlsx"
 )
 
 
 wb_guidelines = load_workbook(
-    r"C:\DSSO\AutomatingRequirementChecks\UDM_Guidelines.xlsx"
+    r"UDM_Guidelines.xlsx"
 )
+
+
 
 
 class Employee:
@@ -89,6 +90,7 @@ class Exceptions:
         self.excuse_req_list = excuse_req_list
         self.requirement_excused = requirement_excused
         self.min_shifts = min_shifts
+
 
 
 def main():
@@ -236,7 +238,7 @@ def main():
         ws_callsheet[f"F{k}"] = ", ".join(employee.missing_reqs)
         k += 1
 
-        wb_requirementsCheck.save("SampleRequirementsCheckForBen.xlsx")
+    wb_requirementsCheck.save("SampleRequirementsCheckForBen.xlsx")
 
 
 # Helper function to convert the day of the year into its respective day of the week
@@ -304,23 +306,23 @@ def getFacilityGuidelineRegular(ws):
         max_start = row[column_index_from_string("E") - 1].value
         min_end = row[column_index_from_string("F") - 1].value
         max_end = row[column_index_from_string("G") - 1].value
-        shift_type = row[column_index_from_string("H") - 1].value
-        cell_value = row[column_index_from_string("I") - 1].value
-        exceptions = False
-        if cell_value.lower() == "y":
-            exceptions = True
-        # TODO: Checkboxes for exceptions
-        other_exception_shifts = row[column_index_from_string("K") - 1].value
+        cell_value = row[column_index_from_string("J") - 1].value
         min_exception_shifts = row[column_index_from_string("L") - 1].value
+
+        excused = False
+        excused_req_list = []
+        if cell_value.lower() == "y":
+            excused = True
+            excused_req_list = decodeExceptionsCheckBoxCell(row_number, ws)
 
         if req_type == "Day":
             day_req_type = DayRequirement(days)
-            day_req = Requirement(day_req_type, exceptions, 1)
+            day_req = Requirement(day_req_type, excused, 1)
             req_list.append(day_req) 
 
         elif req_type == "Time":
             time_req_type = TimeRequirement(min_start, max_start, min_end, max_end)
-            time_req = Requirement(time_req_type, exceptions, 1)
+            time_req = Requirement(time_req_type, excused, 1)
             req_list.append(time_req)
 
         elif req_type == "Shift Type":
@@ -336,6 +338,41 @@ def getFacilityGuidelineRegular(ws):
 def getFacilityGuidelineSupervisor():
     # TODO
     return 0
+
+
+def decodeExceptionsCheckBoxCell(row_number, ws):
+    shift_list = []
+    row_number *= 10
+    breakfast = ws.cell(row=row_number, column=3).value
+    lunch = ws.cell(row=row_number+1, column=3).value
+    dinner = ws.cell(row=row_number+2, column=3).value
+    late = ws.cell(row=row_number+3, column=3).value
+    na = ws.cell(row=row_number+4, column=3).value
+
+    if na : return []
+    
+    if breakfast: 
+        req_type = TimeRequirement(None, convert_to_time("9:00 AM"), None, None) #TODO: Get this time from excel sheet
+        req = Requirement(req_type, False, 1)
+        shift_list.append(req)
+        
+    if lunch: 
+        req_type = TimeRequirement(convert_to_time("9:00 AM"), convert_to_time("12:45 PM") , None, None) #TODO: Get this time from excel sheet
+        req = Requirement(req_type, False, 1)
+        shift_list.append(req)
+        
+    if dinner:
+        req_type = TimeRequirement(convert_to_time("3:00 PM"), convert_to_time("7:29 PM") , None, None) #TODO: Get this time from excel sheet
+        req = Requirement(req_type, False, 1)
+        shift_list.append(req)
+        
+    if late: 
+        req_type = TimeRequirement(convert_to_time("7:30 PM"), None, None, None) #TODO: Get this time from excel sheet
+        req = Requirement(req_type, False, 1)
+        shift_list.append(req)
+        
+    
+    return shift_list
 
 
 def decodeDaysCheckboxCell(row_number, ws):
@@ -363,6 +400,26 @@ def decodeDaysCheckboxCell(row_number, ws):
     
     return day_list
     
+def decodeShiftTypeCheckboxCell(row_number, ws): #TODO
+    shift_list = []
+    row_number *= 10
+    dish = ws.cell(row=row_number, column=3).value
+    dining = ws.cell(row=row_number+1, column=3).value
+    greeter = ws.cell(row=row_number+2, column=3).value
+    beverages = ws.cell(row=row_number+3, column=3).value
+    boh = ws.cell(row=row_number+4, column=3).value
+    na = ws.cell(row=row_number+5, column=3).value
+    
+    if na : return []
+    
+    if dish: shift_list.append("Dish Room")
+    if dining: shift_list.append("Dining Room")
+    if greeter: shift_list.append("Greeter")
+    if beverages: shift_list.append("Beverages")
+    if boh: shift_list.append("Back of House")
+
+    return shift_list
+
 
 def guidelineCheck(guideline, sup_guideline, employeeList):
     for employee in employeeList:

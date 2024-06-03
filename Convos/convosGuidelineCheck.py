@@ -43,12 +43,13 @@ class Employee:
 
 
 class Shift:
-    def __init__(self, day, start_time, end_time, hours, station):
+    def __init__(self, day, start_time, end_time, hours, station, group):
         self.day = day
         self.start_time = start_time
         self.end_time = end_time
         self.hours = hours
         self.station = station
+        self.group = group
 
 
 class Guideline:
@@ -111,6 +112,10 @@ def main():
     #So we don't continuously create more sheets than needed
     if "Call Sheet" in wb_requirementsCheck.sheetnames:
         ws_callsheet = wb_requirementsCheck["Call Sheet"]
+        
+        #Clear the existing call sheet 
+        ws_callsheet.delete_rows(1, ws_callsheet.max_row)
+        ws_callsheet.delete_cols(1, ws_callsheet.max_column)
         
     else:
         wb_requirementsCheck.create_sheet("Call Sheet")
@@ -217,6 +222,7 @@ def main():
                                 convert_to_time(D),
                                 float(H),
                                 F,
+                                E
                             )
                         )
 
@@ -249,6 +255,7 @@ def countRows(ws):
 
 # Helper function to convert the day of the year into its respective day of the week
 def get_day_of_week(date_obj):
+    # date_obj = datetime.datetime.strptime(date_str, "%m/%d/%Y")
     day_of_week_num = date_obj.weekday()
     days_of_week = [
         "Monday",
@@ -709,10 +716,17 @@ def meetsRequirement(
 
         for shift in employee.schedule:
             for shiftType in types:
-                if shift.station == shiftType:
-                    shift_count += 1
-                    if shift_count == min_shifts:
-                        meetsRequirement = True
+                if employee.supervisor == "Yes" and shiftType != "Supervisor":
+                    m_shifts = 1
+                    if shift.group == shiftType:
+                        shift_count += 1
+                        if shift_count == m_shifts:
+                            meetsRequirement = True
+                else:
+                    if shift.station == shiftType:
+                        shift_count += 1
+                        if shift_count == min_shifts:
+                            meetsRequirement = True
         if not (meetsRequirement):
             employee.missing_reqs.append(requirement_name)
 
@@ -723,20 +737,25 @@ def meetsRequirement(
         max_end = requirement_type.max_end
 
         # Set necessary upper/lower bounds of times for values that are null
-        if min_start == None:
+        if min_start == None or isinstance(min_start, str):
             min_start = convert_to_time("12:00:00 AM")
 
-        if max_start == None:
+        if max_start == None or isinstance(max_start, str):
             max_start = convert_to_time("11:59:00 PM")
 
-        if min_end == None:
+        if min_end == None or isinstance(min_end, str):
             min_end = convert_to_time("12:00:00 AM")
 
-        if max_end == None:
+        if max_end == None or isinstance(max_end, str):
             max_end = convert_to_time("11:59:00 PM")
 
         # Sift through schedule and make sure at least 1 shift is in range
         for shift in employee.schedule:
+            
+            #If a shift ends later than 12 AM, we want its end time to be at max
+            if shift.end_time >= convert_to_time("12:00:00 AM") and shift.end_time <= convert_to_time("3:00:00 AM"):
+                shift.end_time = convert_to_time("11:59:00 PM")
+            
             if (
                 shift.start_time >= min_start
                 and shift.start_time <= max_start

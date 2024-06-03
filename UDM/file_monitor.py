@@ -40,7 +40,7 @@ class Handler(FileSystemEventHandler):
         if event.is_directory:
             return None
 
-        if os.path.basename(event.src_path) == "Shifts.xlsx":
+        if os.path.basename(event.src_path) == "Shifts.xlsx" or os.path.basename(event.src_path) == "UDM_Guidelines.xlsx":
             Handler.run_script(event)
 
     @staticmethod

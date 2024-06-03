@@ -3,13 +3,14 @@ from datetime import datetime
 from time import time
 
 
-wb_requirementsCheck = load_workbook(r"C:/DSSO/AutomatingRequirementChecks/UDM/Shifts.xlsx")
+wb_requirementsCheck = load_workbook(
+    r"C:/DSSO/AutomatingRequirementChecks/UDM/Shifts.xlsx"
+)
 
 
 wb_guidelines = load_workbook(
     r"C:/DSSO/AutomatingRequirementChecks/UDM/UDM_Guidelines.xlsx"
 )
-# second commit
 
 
 class Employee:
@@ -23,7 +24,7 @@ class Employee:
         missing_reqs,
         schedule,
         schedule_valid,
-        notes
+        notes,
     ):
         self.last_name = last_name
         self.first_name = first_name
@@ -44,12 +45,13 @@ class Employee:
 
 
 class Shift:
-    def __init__(self, day, start_time, end_time, hours, station):
+    def __init__(self, day, start_time, end_time, hours, station, group):
         self.day = day
         self.start_time = start_time
         self.end_time = end_time
         self.hours = hours
         self.station = station
+        self.group = group
 
 
 class Guideline:
@@ -74,6 +76,7 @@ class TimeRequirement:
         self.min_end = min_end
         self.max_end = max_end
 
+
 class TimeInNeed:
     def __init__(self, time_period, min_start, max_start, min_end, max_end):
         self.time_period = time_period
@@ -81,6 +84,7 @@ class TimeInNeed:
         self.max_start = max_start
         self.min_end = min_end
         self.max_end = max_end
+
 
 class DayRequirement:
     def __init__(self, days_list):
@@ -93,7 +97,9 @@ class ShiftTypeRequirement:
 
 
 class Exceptions:
-    def __init__(self, exception_note, excuse_req_list, requirement_excused, min_shifts):
+    def __init__(
+        self, exception_note, excuse_req_list, requirement_excused, min_shifts
+    ):
         self.exception_note = exception_note
         self.excuse_req_list = excuse_req_list
         self.requirement_excused = requirement_excused
@@ -108,25 +114,32 @@ def main():
 
     # Initialize Worksheets
     ws_schedule = wb_requirementsCheck["Sheet1"]
-    
-    #So we don't continuously create more sheets than needed
+
+    # So we don't continuously create more sheets than needed
     if "Call Sheet" in wb_requirementsCheck.sheetnames:
         ws_callsheet = wb_requirementsCheck["Call Sheet"]
         
+        #Clear the existing call sheet 
+        ws_callsheet.delete_rows(1, ws_callsheet.max_row)
+        ws_callsheet.delete_cols(1, ws_callsheet.max_column)
+
     else:
         wb_requirementsCheck.create_sheet("Call Sheet")
         ws_callsheet = wb_requirementsCheck["Call Sheet"]
-        
+
     ws_requirements = wb_guidelines["UDM Requirements"]
     ws_requirements_supervisor = wb_guidelines["UDM Supervisor Requirements"]
     ws_times_in_need = wb_guidelines["UDM Times in Need"]
-    
 
     employeeList = []
 
-    #Initialize Guidelines 
-    udm_regular_guideline = getFacilityGuidelineRegular(ws_requirements, ws_times_in_need)
-    udm_supervisor_guideline = getFacilityGuidelineSupervisor(ws_requirements_supervisor, ws_times_in_need)
+    # Initialize Guidelines
+    udm_regular_guideline = getFacilityGuidelineRegular(
+        ws_requirements, ws_times_in_need
+    )
+    udm_supervisor_guideline = getFacilityGuidelineSupervisor(
+        ws_requirements_supervisor, ws_times_in_need
+    )
 
     # Initialize Callsheet Column Headers
     ws_callsheet["A1"].value = "Last"
@@ -162,7 +175,7 @@ def main():
                 [],
                 [],
                 True,
-                ""
+                "",
             )
             employeeList.append(employee)
 
@@ -171,7 +184,7 @@ def main():
         min_col=column_index_from_string("F"),
         max_col=column_index_from_string("F"),
         min_row=3,
-        max_row=ws_schedule.max_row - 1  # Exclude the last row
+        max_row=ws_schedule.max_row - 1,  # Exclude the last row
     ):
         val = row[0].value
         if val and isinstance(val, str):
@@ -185,7 +198,7 @@ def main():
         min_col=column_index_from_string("H"),
         max_col=column_index_from_string("H"),
         min_row=3,
-        max_row=ws_schedule.max_row - 1  # Exclude the last row
+        max_row=ws_schedule.max_row - 1,  # Exclude the last row
     ):
         val = row[0].value
         if val:
@@ -218,11 +231,13 @@ def main():
                                 convert_to_time(D),
                                 float(H),
                                 F,
+                                E,
                             )
                         )
 
-
-    guidelineCheck(udm_regular_guideline, udm_supervisor_guideline, employeeList)
+    guidelineCheck(
+        udm_regular_guideline, udm_supervisor_guideline, employeeList
+    )
     filterList(employeeList)
 
     # Add Rows to new worksheet
@@ -240,13 +255,13 @@ def main():
     wb_requirementsCheck.save("Shifts.xlsx")
     print("FINISHED")
 
-    
-    
+
 def countRows(ws):
     count = 0
     for row in ws.iter_rows():
         count += 1
     return count
+
 
 # Helper function to convert the day of the year into its respective day of the week
 def get_day_of_week(date_obj):
@@ -322,7 +337,7 @@ def getFacilityGuidelineRegular(ws_reqs, ws_times):
 
         if not req_name:
             continue
-        
+
         if cell_value.lower() == "y":
             excused = True
         else:
@@ -332,10 +347,17 @@ def getFacilityGuidelineRegular(ws_reqs, ws_times):
             day_req_type = DayRequirement(days)
             day_req = Requirement(req_name, day_req_type, excused, 1)
             if excused and min_exception_shifts >= 1:
-                excused_req_list = decodeExceptionsCheckBoxCell(row_number, ws_reqs, ws_times)
+                excused_req_list = decodeExceptionsCheckBoxCell(
+                    row_number, ws_reqs, ws_times
+                )
                 shift_excused = day_req
-                exceptions = Exceptions(exception_note, excused_req_list, shift_excused, min_exception_shifts)
-                
+                exceptions = Exceptions(
+                    exception_note,
+                    excused_req_list,
+                    shift_excused,
+                    min_exception_shifts,
+                )
+
             req_list.append(day_req)
 
         elif req_type == "Time":
@@ -343,21 +365,34 @@ def getFacilityGuidelineRegular(ws_reqs, ws_times):
             time_req = Requirement(req_name, time_req_type, excused, 1)
 
             if excused and min_exception_shifts >= 1:
-                excused_req_list = decodeExceptionsCheckBoxCell(row_number, ws_reqs, ws_times)
+                excused_req_list = decodeExceptionsCheckBoxCell(
+                    row_number, ws_reqs, ws_times
+                )
                 shift_excused = time_req
-                exceptions = Exceptions(exception_note, excused_req_list, shift_excused, min_exception_shifts)
+                exceptions = Exceptions(
+                    exception_note,
+                    excused_req_list,
+                    shift_excused,
+                    min_exception_shifts,
+                )
 
-                
             req_list.append(time_req)
 
         elif req_type == "Shift Type":
             shiftType_req_type = ShiftTypeRequirement(shift_types_list)
             shiftType_req = Requirement(req_name, shiftType_req_type, excused, 1)
             if excused and min_exception_shifts >= 1:
-                excused_req_list = decodeExceptionsCheckBoxCell(row_number, ws_reqs, ws_times)
+                excused_req_list = decodeExceptionsCheckBoxCell(
+                    row_number, ws_reqs, ws_times
+                )
                 shift_excused = shiftType_req
-                exceptions = Exceptions(exception_note, excused_req_list, shift_excused, min_exception_shifts)
-                
+                exceptions = Exceptions(
+                    exception_note,
+                    excused_req_list,
+                    shift_excused,
+                    min_exception_shifts,
+                )
+
             req_list.append(shiftType_req)
 
         else:
@@ -389,49 +424,76 @@ def getFacilityGuidelineSupervisor(ws_reqs, ws_times):
 
         if not req_name:
             continue
-        
+
         if cell_value.lower() == "y":
             excused = True
         else:
             excused = False
 
-
-        if req_type == "All SUP":            
+        if req_type == "All SUP":
             shiftType_req_type = ShiftTypeRequirement(["All SUP"])
             shiftType_req = Requirement(req_name, shiftType_req_type, excused, 1)
             if excused and min_exception_shifts >= 1:
-                excused_req_list = decodeExceptionsCheckBoxCell(row_number, ws_reqs, ws_times)
+                excused_req_list = decodeExceptionsCheckBoxCell(
+                    row_number, ws_reqs, ws_times
+                )
                 shift_excused = shiftType_req
-                exceptions = Exceptions(exception_note, excused_req_list, shift_excused, min_exception_shifts)    
+                exceptions = Exceptions(
+                    exception_note,
+                    excused_req_list,
+                    shift_excused,
+                    min_exception_shifts,
+                )
             req_list.append(shiftType_req)
-            
+
         elif req_type == "One SUP":
             shiftType_req_type = ShiftTypeRequirement(["One SUP"])
             shiftType_req = Requirement(req_name, shiftType_req_type, excused, 1)
             if excused and min_exception_shifts >= 1:
-                excused_req_list = decodeExceptionsCheckBoxCell(row_number, ws_reqs, ws_times)
+                excused_req_list = decodeExceptionsCheckBoxCell(
+                    row_number, ws_reqs, ws_times
+                )
                 shift_excused = shiftType_req
-                exceptions = Exceptions(exception_note, excused_req_list, shift_excused, min_exception_shifts)
+                exceptions = Exceptions(
+                    exception_note,
+                    excused_req_list,
+                    shift_excused,
+                    min_exception_shifts,
+                )
             req_list.append(shiftType_req)
-            
+
         elif req_type == "Multiple SUPs":
             shiftType_req_type = ShiftTypeRequirement(["Multiple SUPs"])
             shiftType_req = Requirement(req_name, shiftType_req_type, excused, 1)
             if excused and min_exception_shifts >= 1:
-                excused_req_list = decodeExceptionsCheckBoxCell(row_number, ws_reqs, ws_times)
+                excused_req_list = decodeExceptionsCheckBoxCell(
+                    row_number, ws_reqs, ws_times
+                )
                 shift_excused = shiftType_req
-                exceptions = Exceptions(exception_note, excused_req_list, shift_excused, min_exception_shifts)
-                
+                exceptions = Exceptions(
+                    exception_note,
+                    excused_req_list,
+                    shift_excused,
+                    min_exception_shifts,
+                )
+
             req_list.append(shiftType_req)
-            
+
         elif req_type == "Day":
             day_req_type = DayRequirement(days)
             day_req = Requirement(req_name, day_req_type, excused, 1)
             if excused and min_exception_shifts >= 1:
-                excused_req_list = decodeExceptionsCheckBoxCell(row_number, ws_reqs, ws_times)
+                excused_req_list = decodeExceptionsCheckBoxCell(
+                    row_number, ws_reqs, ws_times
+                )
                 shift_excused = day_req
-                exceptions = Exceptions(exception_note, excused_req_list, shift_excused, min_exception_shifts)
-                
+                exceptions = Exceptions(
+                    exception_note,
+                    excused_req_list,
+                    shift_excused,
+                    min_exception_shifts,
+                )
+
             req_list.append(day_req)
 
         elif req_type == "Time":
@@ -439,21 +501,34 @@ def getFacilityGuidelineSupervisor(ws_reqs, ws_times):
             time_req = Requirement(req_name, time_req_type, excused, 1)
 
             if excused and min_exception_shifts >= 1:
-                excused_req_list = decodeExceptionsCheckBoxCell(row_number, ws_reqs, ws_times)
+                excused_req_list = decodeExceptionsCheckBoxCell(
+                    row_number, ws_reqs, ws_times
+                )
                 shift_excused = time_req
-                exceptions = Exceptions(exception_note, excused_req_list, shift_excused, min_exception_shifts)
+                exceptions = Exceptions(
+                    exception_note,
+                    excused_req_list,
+                    shift_excused,
+                    min_exception_shifts,
+                )
 
-                
             req_list.append(time_req)
 
         elif req_type == "Shift Type":
             shiftType_req_type = ShiftTypeRequirement(shift_types_list)
             shiftType_req = Requirement(req_name, shiftType_req_type, excused, 1)
             if excused and min_exception_shifts >= 1:
-                excused_req_list = decodeExceptionsCheckBoxCell(row_number, ws_reqs, ws_times)
+                excused_req_list = decodeExceptionsCheckBoxCell(
+                    row_number, ws_reqs, ws_times
+                )
                 shift_excused = shiftType_req
-                exceptions = Exceptions(exception_note, excused_req_list, shift_excused, min_exception_shifts)
-                
+                exceptions = Exceptions(
+                    exception_note,
+                    excused_req_list,
+                    shift_excused,
+                    min_exception_shifts,
+                )
+
             req_list.append(shiftType_req)
 
         else:
@@ -471,37 +546,43 @@ def decodeExceptionsCheckBoxCell(row_number, ws_reqs, ws_times):
     dinner = ws_reqs.cell(row=row_number + 2, column=11).value
     late = ws_reqs.cell(row=row_number + 3, column=11).value
     na = ws_reqs.cell(row=row_number + 4, column=11).value
-    
 
     if na:
         return []
-     
 
     if breakfast:
         for item in times_in_need:
             if item.time_period == "Breakfast":
-                req_type = TimeRequirement(item.min_start, item.max_start, item.min_end, item.max_end)
+                req_type = TimeRequirement(
+                    item.min_start, item.max_start, item.min_end, item.max_end
+                )
                 req = Requirement("Breakfast", req_type, False, 1)
                 shift_list.append(req)
 
     if lunch:
         for item in times_in_need:
             if item.time_period == "Lunch":
-                req_type = TimeRequirement(item.min_start, item.max_start, item.min_end, item.max_end)
+                req_type = TimeRequirement(
+                    item.min_start, item.max_start, item.min_end, item.max_end
+                )
                 req = Requirement("Lunch", req_type, False, 1)
                 shift_list.append(req)
 
     if dinner:
         for item in times_in_need:
             if item.time_period == "Dinner":
-                req_type = TimeRequirement(item.min_start, item.max_start, item.min_end, item.max_end)
+                req_type = TimeRequirement(
+                    item.min_start, item.max_start, item.min_end, item.max_end
+                )
                 req = Requirement("Dinner", req_type, False, 1)
                 shift_list.append(req)
 
     if late:
         for item in times_in_need:
             if item.time_period == "Late":
-                req_type = TimeRequirement(item.min_start, item.max_start, item.min_end, item.max_end)
+                req_type = TimeRequirement(
+                    item.min_start, item.max_start, item.min_end, item.max_end
+                )
                 req = Requirement("Late", req_type, False, 1)
                 shift_list.append(req)
 
@@ -586,7 +667,7 @@ def guidelineCheck(guideline, sup_guideline, employeeList):
                 req_excused = exceptions.requirement_excused
             min_hours = guideline.min_hours
 
-        employee.schedule_valid = True #Employees are innocent until proven guilty
+        employee.schedule_valid = True  # Employees are innocent until proven guilty
         for req in req_list:
             req_type = req.requirement_type
             req_name = req.requirement_name
@@ -599,14 +680,13 @@ def guidelineCheck(guideline, sup_guideline, employeeList):
                 if exceptions and req == req_excused:
                     if excuseRequirement(employee, exceptions, req):
                         employee.notes = exceptions.exception_note
-                        
+
                         if req.requirement_name in employee.missing_reqs:
                             employee.missing_reqs.remove(req.requirement_name)
 
-                            
-                    else :
+                    else:
                         employee.schedule_valid = False
-                
+
                 else:
                     employee.schedule_valid = False
     return employeeList
@@ -667,6 +747,11 @@ def countMetRequirements(employee, requirement_type):
 
         # Sift through schedule and make sure at least 1 shift is in range
         for shift in employee.schedule:
+            
+            #If a shift ends later than 12 AM, we want its end time to be at max
+            if shift.end_time >= convert_to_time("12:00:00 AM") and shift.end_time <= convert_to_time("3:00:00 AM"):
+                shift.end_time = convert_to_time("11:59:00 PM")
+            
             if (
                 shift.start_time >= min_start
                 and shift.start_time <= max_start
@@ -700,21 +785,28 @@ def meetsRequirement(
         if "All SUP" in types:
             types = ["Supervisor"]
             min_shifts = employee.shift_count
-            
+
         elif "One SUP" in types:
             types = ["Supervisor"]
             min_shifts = 1
-            
+
         elif "Multiple SUPs" in types:
             types = ["Supervisor"]
             min_shifts = 2
 
         for shift in employee.schedule:
             for shiftType in types:
-                if shift.station == shiftType:
-                    shift_count += 1
-                    if shift_count == min_shifts:
-                        meetsRequirement = True
+                if employee.supervisor == "Yes" and shiftType != "Supervisor":
+                    m_shifts = 1
+                    if shift.group == shiftType:
+                        shift_count += 1
+                        if shift_count == m_shifts:
+                            meetsRequirement = True
+                else:
+                    if shift.station == shiftType:
+                        shift_count += 1
+                        if shift_count == min_shifts:
+                            meetsRequirement = True
         if not (meetsRequirement):
             employee.missing_reqs.append(requirement_name)
 
@@ -725,16 +817,16 @@ def meetsRequirement(
         max_end = requirement_type.max_end
 
         # Set necessary upper/lower bounds of times for values that are null
-        if min_start == None:
+        if min_start == None or isinstance(min_start, str):
             min_start = convert_to_time("12:00:00 AM")
 
-        if max_start == None:
+        if max_start == None or isinstance(max_start, str):
             max_start = convert_to_time("11:59:00 PM")
 
-        if min_end == None:
+        if min_end == None or isinstance(min_end, str):
             min_end = convert_to_time("12:00:00 AM")
 
-        if max_end == None:
+        if max_end == None or isinstance(max_end, str):
             max_end = convert_to_time("11:59:00 PM")
 
         # Sift through schedule and make sure at least 1 shift is in range
@@ -767,26 +859,28 @@ def filterList(employeeList):
 
 def getTimesInNeed(ws):
     times_list = []
-    
+
     if ws:
-        for colA, colB, colC, colD, colE in zip(  
+        for colA, colB, colC, colD, colE in zip(
             ws.iter_cols(min_col=1, max_col=1, min_row=2, values_only=True),
             ws.iter_cols(min_col=2, max_col=2, min_row=2, values_only=True),
             ws.iter_cols(min_col=3, max_col=3, min_row=2, values_only=True),
             ws.iter_cols(min_col=4, max_col=4, min_row=2, values_only=True),
-            ws.iter_cols(min_col=5, max_col=5, min_row=2, values_only=True)
+            ws.iter_cols(min_col=5, max_col=5, min_row=2, values_only=True),
         ):
             for A, B, C, D, E in zip(colA, colB, colC, colD, colE):
-                if A: 
+                if A:
                     time_period = A
                     min_start = B
                     max_start = C
                     min_end = D
                     max_end = E
-                    times_list.append(TimeInNeed(time_period, min_start, max_start, min_end, max_end))
-                    
+                    times_list.append(
+                        TimeInNeed(time_period, min_start, max_start, min_end, max_end)
+                    )
+
     return times_list
-                    
+
 
 def convert_to_time(time_input):
     # Check if the input is a datetime object

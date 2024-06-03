@@ -3,13 +3,12 @@ from datetime import datetime
 from time import time
 
 
-wb_requirementsCheck = load_workbook(r"C:/DSSO/AutomatingRequirementChecks/Shifts.xlsx")
+wb_requirementsCheck = load_workbook(r"C:/DSSO/AutomatingRequirementChecks/Friley/Shifts.xlsx")
 
 
 wb_guidelines = load_workbook(
-    r"C:/DSSO/AutomatingRequirementChecks/UDM_Guidelines.xlsx"
+    r"C:/DSSO/AutomatingRequirementChecks/Friley/friley_Guidelines.xlsx"
 )
-# second commit
 
 
 class Employee:
@@ -107,24 +106,26 @@ def main():
     k = 2
 
     # Initialize Worksheets
-    ws_schedule = wb_requirementsCheck.active
-    wb_requirementsCheck.create_sheet("Call Sheet")
-    ws_callsheet = wb_requirementsCheck["Call Sheet"]
-    ws_requirements = wb_guidelines.active
-    ws_requirements_supervisor = wb_guidelines["UDM Supervisor Requirements"]
-    ws_times_in_need = wb_guidelines["UDM Times in Need"]
+    ws_schedule = wb_requirementsCheck["Sheet1"]
     
-    last_row = ws_schedule.max_row 
-    if not("Count" in ws_schedule.cell(row=last_row, column=column_index_from_string("F")).value):
-        ws_schedule.delete_rows(last_row)
-        wb_requirementsCheck.save("Shifts.xlsx")
-
+    #So we don't continuously create more sheets than needed
+    if "Call Sheet" in wb_requirementsCheck.sheetnames:
+        ws_callsheet = wb_requirementsCheck["Call Sheet"]
+        
+    else:
+        wb_requirementsCheck.create_sheet("Call Sheet")
+        ws_callsheet = wb_requirementsCheck["Call Sheet"]
+        
+    ws_requirements = wb_guidelines["Friley Requirements"]
+    ws_requirements_supervisor = wb_guidelines["Friley Supervisor Requirements"]
+    ws_times_in_need = wb_guidelines["Friley Times in Need"]
+    
 
     employeeList = []
 
     #Initialize Guidelines 
-    udm_regular_guideline = getFacilityGuidelineRegular(ws_requirements, ws_times_in_need)
-    udm_supervisor_guideline = getFacilityGuidelineSupervisor(ws_requirements_supervisor, ws_times_in_need)
+    friley_regular_guideline = getFacilityGuidelineRegular(ws_requirements, ws_times_in_need)
+    friley_supervisor_guideline = getFacilityGuidelineSupervisor(ws_requirements_supervisor, ws_times_in_need)
 
     # Initialize Callsheet Column Headers
     ws_callsheet["A1"].value = "Last"
@@ -169,9 +170,10 @@ def main():
         min_col=column_index_from_string("F"),
         max_col=column_index_from_string("F"),
         min_row=3,
+        max_row=ws_schedule.max_row - 1  # Exclude the last row
     ):
         val = row[0].value
-        if val:
+        if val and isinstance(val, str):
             if "Count: " in val:
                 employeeList[i].shift_count = getShiftCount(val)
                 i += 1
@@ -182,6 +184,7 @@ def main():
         min_col=column_index_from_string("H"),
         max_col=column_index_from_string("H"),
         min_row=3,
+        max_row=ws_schedule.max_row - 1  # Exclude the last row
     ):
         val = row[0].value
         if val:
@@ -218,7 +221,7 @@ def main():
                         )
 
 
-    guidelineCheck(udm_regular_guideline, udm_supervisor_guideline, employeeList)
+    guidelineCheck(friley_regular_guideline, friley_supervisor_guideline, employeeList)
     filterList(employeeList)
 
     # Add Rows to new worksheet

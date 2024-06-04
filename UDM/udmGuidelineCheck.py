@@ -62,10 +62,11 @@ class Guideline:
 
 
 class Requirement:
-    def __init__(self, requirement_name, requirement_type, excused, min_shifts):
+    def __init__(self, requirement_name, requirement_type, excused, exception, min_shifts):
         self.requirement_name = requirement_name
         self.requirement_type = requirement_type
         self.excused = excused
+        self.exception = exception
         self.min_shifts = min_shifts
 
 
@@ -338,14 +339,14 @@ def getFacilityGuidelineRegular(ws_reqs, ws_times):
         if not req_name:
             continue
 
-        if cell_value.lower() == "y":
+        if cell_value and cell_value.lower() == "y":
             excused = True
         else:
             excused = False
 
         if req_type == "Day":
             day_req_type = DayRequirement(days)
-            day_req = Requirement(req_name, day_req_type, excused, 1)
+            day_req = Requirement(req_name, day_req_type, excused, None, 1)
             if excused and min_exception_shifts >= 1:
                 excused_req_list = decodeExceptionsCheckBoxCell(
                     row_number, ws_reqs, ws_times
@@ -357,12 +358,14 @@ def getFacilityGuidelineRegular(ws_reqs, ws_times):
                     shift_excused,
                     min_exception_shifts,
                 )
+                
+                day_req.exception = exceptions
 
             req_list.append(day_req)
 
         elif req_type == "Time":
             time_req_type = TimeRequirement(min_start, max_start, min_end, max_end)
-            time_req = Requirement(req_name, time_req_type, excused, 1)
+            time_req = Requirement(req_name, time_req_type, excused, None, 1)
 
             if excused and min_exception_shifts >= 1:
                 excused_req_list = decodeExceptionsCheckBoxCell(
@@ -375,12 +378,15 @@ def getFacilityGuidelineRegular(ws_reqs, ws_times):
                     shift_excused,
                     min_exception_shifts,
                 )
+                
+                time_req.exception = exceptions
+
 
             req_list.append(time_req)
 
         elif req_type == "Shift Type":
             shiftType_req_type = ShiftTypeRequirement(shift_types_list)
-            shiftType_req = Requirement(req_name, shiftType_req_type, excused, 1)
+            shiftType_req = Requirement(req_name, shiftType_req_type, excused, None, 1)
             if excused and min_exception_shifts >= 1:
                 excused_req_list = decodeExceptionsCheckBoxCell(
                     row_number, ws_reqs, ws_times
@@ -392,6 +398,9 @@ def getFacilityGuidelineRegular(ws_reqs, ws_times):
                     shift_excused,
                     min_exception_shifts,
                 )
+                
+                shiftType_req.exception = exceptions
+
 
             req_list.append(shiftType_req)
 
@@ -432,7 +441,7 @@ def getFacilityGuidelineSupervisor(ws_reqs, ws_times):
 
         if req_type == "All SUP":
             shiftType_req_type = ShiftTypeRequirement(["All SUP"])
-            shiftType_req = Requirement(req_name, shiftType_req_type, excused, 1)
+            shiftType_req = Requirement(req_name, shiftType_req_type, excused, None, 1)
             if excused and min_exception_shifts >= 1:
                 excused_req_list = decodeExceptionsCheckBoxCell(
                     row_number, ws_reqs, ws_times
@@ -444,11 +453,14 @@ def getFacilityGuidelineSupervisor(ws_reqs, ws_times):
                     shift_excused,
                     min_exception_shifts,
                 )
+                
+                shiftType_req.exception = exceptions
+                
             req_list.append(shiftType_req)
 
         elif req_type == "One SUP":
             shiftType_req_type = ShiftTypeRequirement(["One SUP"])
-            shiftType_req = Requirement(req_name, shiftType_req_type, excused, 1)
+            shiftType_req = Requirement(req_name, shiftType_req_type, excused, None, 1)
             if excused and min_exception_shifts >= 1:
                 excused_req_list = decodeExceptionsCheckBoxCell(
                     row_number, ws_reqs, ws_times
@@ -460,11 +472,14 @@ def getFacilityGuidelineSupervisor(ws_reqs, ws_times):
                     shift_excused,
                     min_exception_shifts,
                 )
+                
+                shiftType_req.exception = exceptions
+                
             req_list.append(shiftType_req)
 
         elif req_type == "Multiple SUPs":
             shiftType_req_type = ShiftTypeRequirement(["Multiple SUPs"])
-            shiftType_req = Requirement(req_name, shiftType_req_type, excused, 1)
+            shiftType_req = Requirement(req_name, shiftType_req_type, excused, None, 1)
             if excused and min_exception_shifts >= 1:
                 excused_req_list = decodeExceptionsCheckBoxCell(
                     row_number, ws_reqs, ws_times
@@ -476,12 +491,15 @@ def getFacilityGuidelineSupervisor(ws_reqs, ws_times):
                     shift_excused,
                     min_exception_shifts,
                 )
+                
+                shiftType_req.exception = exceptions
+            
 
             req_list.append(shiftType_req)
 
         elif req_type == "Day":
             day_req_type = DayRequirement(days)
-            day_req = Requirement(req_name, day_req_type, excused, 1)
+            day_req = Requirement(req_name, day_req_type, excused, None, 1)
             if excused and min_exception_shifts >= 1:
                 excused_req_list = decodeExceptionsCheckBoxCell(
                     row_number, ws_reqs, ws_times
@@ -493,12 +511,14 @@ def getFacilityGuidelineSupervisor(ws_reqs, ws_times):
                     shift_excused,
                     min_exception_shifts,
                 )
+                
+                day_req.exception = exceptions
 
             req_list.append(day_req)
 
         elif req_type == "Time":
             time_req_type = TimeRequirement(min_start, max_start, min_end, max_end)
-            time_req = Requirement(req_name, time_req_type, excused, 1)
+            time_req = Requirement(req_name, time_req_type, excused, None, 1)
 
             if excused and min_exception_shifts >= 1:
                 excused_req_list = decodeExceptionsCheckBoxCell(
@@ -511,12 +531,14 @@ def getFacilityGuidelineSupervisor(ws_reqs, ws_times):
                     shift_excused,
                     min_exception_shifts,
                 )
+                
+                time_req.exception = exceptions
 
             req_list.append(time_req)
 
         elif req_type == "Shift Type":
             shiftType_req_type = ShiftTypeRequirement(shift_types_list)
-            shiftType_req = Requirement(req_name, shiftType_req_type, excused, 1)
+            shiftType_req = Requirement(req_name, shiftType_req_type, excused, None, 1)
             if excused and min_exception_shifts >= 1:
                 excused_req_list = decodeExceptionsCheckBoxCell(
                     row_number, ws_reqs, ws_times
@@ -528,6 +550,8 @@ def getFacilityGuidelineSupervisor(ws_reqs, ws_times):
                     shift_excused,
                     min_exception_shifts,
                 )
+                
+                shiftType_req.exception = exceptions
 
             req_list.append(shiftType_req)
 
@@ -556,7 +580,7 @@ def decodeExceptionsCheckBoxCell(row_number, ws_reqs, ws_times):
                 req_type = TimeRequirement(
                     item.min_start, item.max_start, item.min_end, item.max_end
                 )
-                req = Requirement("Breakfast", req_type, False, 1)
+                req = Requirement("Breakfast", req_type, False, None, 1)
                 shift_list.append(req)
 
     if lunch:
@@ -565,7 +589,7 @@ def decodeExceptionsCheckBoxCell(row_number, ws_reqs, ws_times):
                 req_type = TimeRequirement(
                     item.min_start, item.max_start, item.min_end, item.max_end
                 )
-                req = Requirement("Lunch", req_type, False, 1)
+                req = Requirement("Lunch", req_type, False, None, 1)
                 shift_list.append(req)
 
     if dinner:
@@ -574,7 +598,7 @@ def decodeExceptionsCheckBoxCell(row_number, ws_reqs, ws_times):
                 req_type = TimeRequirement(
                     item.min_start, item.max_start, item.min_end, item.max_end
                 )
-                req = Requirement("Dinner", req_type, False, 1)
+                req = Requirement("Dinner", req_type, False, None, 1)
                 shift_list.append(req)
 
     if late:
@@ -583,7 +607,7 @@ def decodeExceptionsCheckBoxCell(row_number, ws_reqs, ws_times):
                 req_type = TimeRequirement(
                     item.min_start, item.max_start, item.min_end, item.max_end
                 )
-                req = Requirement("Late", req_type, False, 1)
+                req = Requirement("Late", req_type, False, None, 1)
                 shift_list.append(req)
 
     return shift_list
@@ -677,8 +701,8 @@ def guidelineCheck(guideline, sup_guideline, employeeList):
                 )
             ):
                 # Check for excuses in the requirement
-                if exceptions and req == req_excused:
-                    if excuseRequirement(employee, exceptions, req):
+                if req.exception and req == req_excused:
+                    if excuseRequirement(employee, req.exception, req):
                         employee.notes = exceptions.exception_note
 
                         if req.requirement_name in employee.missing_reqs:
@@ -831,6 +855,12 @@ def meetsRequirement(
 
         # Sift through schedule and make sure at least 1 shift is in range
         for shift in employee.schedule:
+            
+            #If a shift ends later than 12 AM, we want its end time to be at max
+            if shift.end_time >= convert_to_time("12:00:00 AM") and shift.end_time <= convert_to_time("3:00:00 AM"):
+                shift.end_time = convert_to_time("11:59:00 PM")
+                
+                
             if (
                 shift.start_time >= min_start
                 and shift.start_time <= max_start
